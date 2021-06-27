@@ -5,6 +5,8 @@ import os
 import sys
 import random
 from datetime import datetime
+
+import PyQt5
 from db import *
 from Worker import *
 from time import time,sleep
@@ -13,7 +15,10 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(601, 530)
-        MainWindow.setStyleSheet("")
+        MainWindow.setMinimumSize(QtCore.QSize(601, 530))
+        MainWindow.setMaximumSize(QtCore.QSize(601, 530))
+        MainWindow.setStyleSheet("color:white;\n"
+        "background-color: rgb(61, 56, 70);\n")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.ru_phrase = QtWidgets.QLabel(self.centralwidget)
@@ -42,6 +47,8 @@ class Ui_MainWindow(object):
         self.ru_phrase.setObjectName("ru_phrase")
         self.en_phrase = QtWidgets.QPlainTextEdit(self.centralwidget)
         self.en_phrase.setGeometry(QtCore.QRect(20, 330, 561, 141))
+        self.en_phrase.setStyleSheet("color:black;")
+
         font = QtGui.QFont()
         font.setFamily("DejaVu Sans")
         font.setPointSize(22)
@@ -51,9 +58,10 @@ class Ui_MainWindow(object):
         self.en_phrase.setFont(font)
         self.en_phrase.setPlainText("")
         self.en_phrase.setObjectName("en_phrase")
+        
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setEnabled(True)
-        self.label.setGeometry(QtCore.QRect(160, 0, 431, 31))
+        self.label.setGeometry(QtCore.QRect(160, 0, 420, 31))
         font = QtGui.QFont()
         font.setPointSize(13)
         font.setBold(True)
@@ -62,11 +70,13 @@ class Ui_MainWindow(object):
         self.label.setFont(font)
         self.label.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label.setObjectName("label")
-        self.label_2 = QtWidgets.QLabel(self.centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(230, 20, 361, 31))
-        self.label_2.setText("")
-        self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.label_2.setObjectName("label_2")
+
+        #self.label_2 = QtWidgets.QLabel(self.centralwidget)
+        #self.label_2.setGeometry(QtCore.QRect(230, 20, 361, 31))
+        #self.label_2.setText("hudf")
+        #self.label_2.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        #self.label_2.setObjectName("label_2")
+        
         self.ru_word = QtWidgets.QLabel(self.centralwidget)
         self.ru_word.setGeometry(QtCore.QRect(21, 71, 271, 81))
         font = QtGui.QFont()
@@ -184,17 +194,17 @@ class Ui_MainWindow(object):
         self.clear.clicked.connect(self.clear_clicked)
         self.next.clicked.connect(self.next_clicked)
         self.skip.clicked.connect(self.skip_clicked)
-        #self.add_to_important.clicked.connect(self.add_to_important_clicked)
         self.answer = self.init_controls()
+    
 
     def init_controls(self):
         self.next.setDisabled(True)
         self.info()
         self.deslock_controls()
-        self.en_phrase.setStyleSheet("background-color: rgb(255, 255, 255);\n")
+        self.en_phrase.setStyleSheet("color:black;background-color: rgb(255, 255, 255);\n")
         words = db.get_words()
         if words != None:
-            index = random.randint(0,99)
+            index = random.randint(0,9)
             word = words[index]
             self.ru_word.setText(" | \n".join(word[1].split(';')))
             self.ru_phrase.setText(" | \n".join(word[3].split(';')))
@@ -204,7 +214,11 @@ class Ui_MainWindow(object):
                 self.en_word.setText("? ? ? ?")
             return word
         return None
+    
+    def keypress(self, event):
         
+        print("key pressed")
+
     def submit_clicked(self):
         ratio = self.check_ratio_true(self.en_phrase.toPlainText().lower())
         self.lock_controls()
@@ -212,12 +226,12 @@ class Ui_MainWindow(object):
         if self.answer != None:
             id = int(self.answer[0])
             if self.answer[4]!="":
-                if ratio>=80:
+                if ratio:
                     db.update_words({'id':id},{'point':int(self.answer[5])+(int(self.answer[5])//100)*10,'date':str(datetime.now())[:10]})
-                    self.en_phrase.setStyleSheet("background-color: rgba(57, 172, 85, 133);\ncolor:rgb(255,255,255);\n")
+                    self.en_phrase.setStyleSheet("color:black;background-color: rgba(57, 172, 85, 133);\ncolor:rgb(255,255,255);\n")
                 else:
                     db.update_words({'id':id},{'failure':int(self.answer[7])+1})
-                    self.en_phrase.setStyleSheet("background-color: rgba(247, 66, 66, 151);\ncolor:rgb(255,255,255);\n")
+                    self.en_phrase.setStyleSheet("color:black;background-color: rgba(247, 66, 66, 151);\ncolor:rgb(255,255,255);\n")
                 self.en_phrase.setPlainText("\n".join(self.answer[4].split(';')))
         self.info()
         
@@ -259,8 +273,8 @@ class Ui_MainWindow(object):
         else:
             options = self.answer[2]
         ratio = process.extract(answer,options.split(';'))
-        print(ratio)
-        return sum([x[1] for x in ratio if len(ratio)>0])/len(ratio)
+        score = list(map(lambda y:y[1],list(filter(lambda x: x[1]>80,ratio))))
+        return len(score)>0
         #if answer in position_answer.split(';'):
         #        return 100
         #else:

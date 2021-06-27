@@ -5,7 +5,8 @@ import os
 class db:
     @staticmethod
     def get(self,table,conditions:dict):
-        con = sqlite3.connect("db.db")
+        path = os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1])
+        con = sqlite3.connect(f"{path}{os.sep}db.db")
         cur=con.cursor()
         try:
             sql = f"selct * from {table} where"
@@ -18,22 +19,29 @@ class db:
     
     @staticmethod
     def get_words():
-        con = sqlite3.connect("db.db")
+        path = os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1])
+        con = sqlite3.connect(f"{path}{os.sep}db.db")
         cur=con.cursor()
         try:
-            sql = f"select * from words where point<=50 limit 100"
+            sql =  f"""
+                        select * from words where 
+                        point<(((point/100)*100)+100) and 
+                        cast(julianday('now')-julianday(date) as INTEGER)>=6 
+                        limit 10
+                    """
             res = cur.execute(sql)
             res = res.fetchall()
             con.commit()
             return res
         except sqlite3.Error as err:
-            print("Error : "+err)
+            print("Error : "+str(err))
             return None
     
     @staticmethod
     def get_level():
         sql = "select sum(point) from words"
-        con = sqlite3.connect("db.db")
+        path = os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1])
+        con = sqlite3.connect(f"{path}{os.sep}db.db")
         cur = con.cursor()
         try:
             res = cur.execute(sql).fetchone()
@@ -44,7 +52,8 @@ class db:
         return (1,res[0])
     @staticmethod
     def update_words(condition:dict,fields:dict):
-        con = sqlite3.connect("db.db")
+        path = os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1])
+        con = sqlite3.connect(f"{path}{os.sep}db.db")
         cur = con.cursor()
         try:
             id  = list(condition.keys())[0]
@@ -64,7 +73,8 @@ class db:
     @staticmethod
     def get_user():
         sql = "select * from user"
-        con = sqlite3.connect("db.db")
+        path = os.sep.join(os.path.realpath(__file__).split(os.sep)[:-1])
+        con = sqlite3.connect(f"{path}{os.sep}db.db")
         cur = con.cursor()
         try:
             res = cur.execute(sql).fetchone()
